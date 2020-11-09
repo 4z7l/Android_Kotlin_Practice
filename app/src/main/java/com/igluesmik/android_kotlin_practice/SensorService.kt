@@ -1,19 +1,24 @@
 package com.igluesmik.android_kotlin_practice
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.IBinder
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 
-class SensorService : Service(), SensorEventListener{
+class SensorService : Service(), SensorEventListener, LocationListener{
 
     companion object{
         private const val TAG = "SensorService"
@@ -23,13 +28,10 @@ class SensorService : Service(), SensorEventListener{
     }
 
     private lateinit var locationManager : LocationManager
-    private lateinit var locationListener: LocationListener
-
     private lateinit var sensorManager: SensorManager
 
     private var accelerationSensor : Sensor?= null
     private var magneticSensor : Sensor?= null
-
 
     private var accelerationData = FloatArray(3)
     private var magneticData = FloatArray(3)
@@ -38,7 +40,6 @@ class SensorService : Service(), SensorEventListener{
 
     private var latitude : Double ?= null
     private var longitude : Double ?= null
-
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.e(TAG, "onStartCommand")
@@ -68,10 +69,6 @@ class SensorService : Service(), SensorEventListener{
 
     private fun initLocationSensor() {
         locationManager = getSystemService(AppCompatActivity.LOCATION_SERVICE) as LocationManager
-        locationListener = LocationListener { location ->
-            latitude = location.latitude
-            longitude = location.longitude
-        }
     }
 
     private fun initMotionSensor() {
@@ -82,8 +79,16 @@ class SensorService : Service(), SensorEventListener{
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun attachLocationListener() {
-
+        locationManager.apply {
+            requestLocationUpdates(
+                LocationManager.GPS_PROVIDER, LOCATION_MIN_TIME_MS, LOCATION_MIN_DISTANCE_M, this@SensorService
+            )
+            requestLocationUpdates(
+                LocationManager.NETWORK_PROVIDER, LOCATION_MIN_TIME_MS, LOCATION_MIN_DISTANCE_M, this@SensorService
+            )
+        }
     }
 
     private fun attachSensorListener() {
@@ -94,7 +99,7 @@ class SensorService : Service(), SensorEventListener{
     }
 
     private fun detachLocationListener() {
-
+        locationManager.removeUpdates(this)
     }
 
     private fun detachSensorListener() {
@@ -125,6 +130,12 @@ class SensorService : Service(), SensorEventListener{
         earthData[1] = rotationData[3] * accelerationData[0] + rotationData[4] * accelerationData[1] + rotationData[5] * accelerationData[2]
         earthData[2] = rotationData[6] * accelerationData[0] + rotationData[7] * accelerationData[1] + rotationData[8] * accelerationData[2]
 
-        Log.e(TAG, "${earthData[0]}, ${earthData[1]}, ${earthData[2]}")
+        //Log.e(TAG, "${earthData[0]}, ${earthData[1]}, ${earthData[2]}")
+    }
+
+    override fun onLocationChanged(location: Location) {
+        latitude = location.latitude
+        longitude = location.longitude
+        Log.e(TAG, "${latitude}, ${longitude}")
     }
 }
