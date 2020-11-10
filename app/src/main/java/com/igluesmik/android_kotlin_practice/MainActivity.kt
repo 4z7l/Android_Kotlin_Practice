@@ -29,12 +29,25 @@ class MainActivity : AppCompatActivity() {
 
         toggleBtn.setOnClickListener {
             if (toggleBtn.isChecked) {
-                startService(service)
+                actionOnService(Actions.START)
+                //startService(service)
             } else {
-                stopService(service)
+                actionOnService(Actions.STOP)
             }
         }
 
+    }
+
+    private fun actionOnService(action : Actions){
+        if (getServiceState(this) == ServiceState.STOPPED && action == Actions.STOP) return
+        Intent(this, SensorService::class.java).also {
+            it.action = action.name
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                startForegroundService(it)
+                return
+            }
+            startService(it)
+        }
     }
 
 
