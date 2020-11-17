@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class GithubApiClient {
     companion object {
-        private val BASE_URL = "http://api.github.com"
+        private const val BASE_URL = "https://api.github.com/"
 
         private fun getInstance(): Retrofit {
             return Retrofit.Builder()
